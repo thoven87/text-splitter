@@ -5,15 +5,17 @@
 /// - Retains exact whitespace / indentation.
 /// - Also splits on horizontal rules (`---`, `***`, `___`).
 /// - Records code-block language in the `"Code"` metadata key.
-public struct ExperimentalMarkdownSyntaxTextSplitter: Sendable {
+// Regex literals are instance properties so ARC releases them with the struct;
+// nonisolated(unsafe) static lets on Linux leak their AST allocation at process exit.
+public struct ExperimentalMarkdownSyntaxTextSplitter {
 
     private let splittableHeaders: [String: String]
     public let returnEachLine: Bool
     public let stripHeaders: Bool
 
-    nonisolated(unsafe) private static let headerRx = #/^(#{1,6}) (.*)/#
-    nonisolated(unsafe) private static let fenceRx = #/^(?:```|~~~)(.*)/#
-    nonisolated(unsafe) private static let horzRx = #/^(?:\*\*\*+|---+|___+)[ \t]*$/#
+    private let headerRx = #/^(#{1,6}) (.*)/#
+    private let fenceRx  = #/^(?:```|~~~)(.*)/#
+    private let horzRx   = #/^(?:\*\*\*+|---+|___+)[ \t]*$/#
 
     public init(
         headersToSplitOn: [(String, String)]? = nil,
@@ -45,7 +47,7 @@ public struct ExperimentalMarkdownSyntaxTextSplitter: Sendable {
             let raw = rawLines[i]
             let trimmed = trimWhitespace(raw)
 
-            if let hm = trimmed.prefixMatch(of: Self.headerRx) {
+            if let hm = trimmed.prefixMatch(of: headerRx) {
                 let hashes = String(hm.1)
                 guard splittableHeaders[hashes] != nil else {
                     current.pageContent += raw
@@ -56,7 +58,7 @@ public struct ExperimentalMarkdownSyntaxTextSplitter: Sendable {
                 if !stripHeaders { current.pageContent += raw }
                 resolveStack(&headerStack, depth: hashes.count, text: String(hm.2))
                 i += 1
-            } else if let cm = trimmed.prefixMatch(of: Self.fenceRx) {
+            } else if let cm = trimmed.prefixMatch(of: fenceRx) {
                 flush(&chunks, &current, stack: headerStack)
                 let lang = String(cm.1)
                 var body = raw
@@ -65,12 +67,12 @@ public struct ExperimentalMarkdownSyntaxTextSplitter: Sendable {
                     let l = rawLines[i]
                     body += l
                     i += 1
-                    if trimWhitespace(l).prefixMatch(of: Self.fenceRx) != nil { break }
+                    if trimWhitespace(l).prefixMatch(of: fenceRx) != nil { break }
                 }
                 current.pageContent = body
                 current.metadata["Code"] = lang
                 flush(&chunks, &current, stack: headerStack)
-            } else if trimmed.wholeMatch(of: Self.horzRx) != nil {
+            } else if trimmed.wholeMatch(of: horzRx) != nil {
                 flush(&chunks, &current, stack: headerStack)
                 i += 1
             } else {
@@ -140,3 +142,7 @@ public struct ExperimentalMarkdownSyntaxTextSplitter: Sendable {
         current = Document(pageContent: "")
     }
 }
+// TODO: revisit if regex conforms to Sendable
+// Instance-stored Regex<...> types are not Sendable in the current SDK;
+// the struct is safe because all stored properties are immutable after init.
+extension ExperimentalMarkdownSyntaxTextSplitter: @unchecked Sendable {}

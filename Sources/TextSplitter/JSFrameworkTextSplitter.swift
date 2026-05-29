@@ -21,7 +21,7 @@ public struct JSFrameworkTextSplitter: TextSplitting {
         "\ndefault ", " default ",
     ]
 
-    nonisolated(unsafe) private static let tagRegex = #/<\s*([a-zA-Z0-9]+)[^>]*>/#
+    private let tagRegex = #/<\s*([a-zA-Z0-9]+)[^>]*>/#
 
     public init(
         separators: [String] = [],
@@ -41,7 +41,7 @@ public struct JSFrameworkTextSplitter: TextSplitting {
         // Collect unique opening component tags in document order.
         var seen: Set<String> = []
         var componentSeps: [String] = []
-        for match in text.matches(of: Self.tagRegex) {
+        for match in text.matches(of: tagRegex) {
             let name = String(match.1)
             if seen.insert(name).inserted {
                 componentSeps.append("<\(name)")
@@ -66,3 +66,5 @@ public struct JSFrameworkTextSplitter: TextSplitting {
         return splitter.splitText(text)
     }
 }
+// TODO: revisit if regex conforms to Sendable
+extension JSFrameworkTextSplitter: @unchecked Sendable {}

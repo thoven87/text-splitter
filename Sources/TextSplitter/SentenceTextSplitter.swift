@@ -9,9 +9,7 @@ public struct SentenceTextSplitter: TextSplitting {
         "etc", "Co", "Corp", "Inc", "Ltd", "Ave", "Blvd", "Dept",
     ]
 
-    // Matches sentence-ending punctuation before whitespace + uppercase or end of string.
-    nonisolated(unsafe) private static let boundaryRx =
-        #/[.!?]+(?=[ \t]+[A-Z]|[ \t]*$)/#
+    private let boundaryRx = #/[.!?]+(?=[ \t]+[A-Z]|[ \t]*$)/#
 
     /// Initialise with an existing `SplitterConfig`. Never throws.
     public init(config: SplitterConfig) {
@@ -26,7 +24,7 @@ public struct SentenceTextSplitter: TextSplitting {
         var sentences: [String] = []
         var lastEnd = text.startIndex
 
-        for match in text.matches(of: Self.boundaryRx) {
+        for match in text.matches(of: boundaryRx) {
             let matchStart = match.range.lowerBound
 
             // Walk back to find the word immediately before the punctuation.
@@ -51,3 +49,5 @@ public struct SentenceTextSplitter: TextSplitting {
         return sentences.isEmpty ? [text] : mergeSplits(sentences, separator: " ", config: config)
     }
 }
+// TODO: revisit if regex conforms to Sendable
+extension SentenceTextSplitter: @unchecked Sendable {}
