@@ -23,9 +23,3 @@ for try await chunk in splitter.split(pdf.textStream()) {
     await store.upsert(Document(pageContent: chunk))
 }
 ```
-
-## Documentation
-
-```bash
-swift package --disable-sandbox preview-documentation --target TextSplitter
-```
