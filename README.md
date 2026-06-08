@@ -15,7 +15,8 @@ Split text into chunks for embedding and retrieval pipelines.
 ```swift
 import TextSplitter
 
-let splitter = try RecursiveCharacterTextSplitter(chunkSize: 512, chunkOverlap: 50)
+// chunkSize/chunkOverlap are in characters; 2 048 chars ≈ 512 tokens
+let splitter = try RecursiveCharacterTextSplitter(chunkSize: 2048, chunkOverlap: 256)
 let chunks   = splitter.splitText(myDocument)
 
 // or stream page by page
