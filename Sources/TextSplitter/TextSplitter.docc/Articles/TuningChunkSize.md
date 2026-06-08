@@ -11,17 +11,18 @@ before you spend time or money on embeddings.
 ## Reading the output
 
 ```swift
-let splitter = try RecursiveCharacterTextSplitter(chunkSize: 512, chunkOverlap: 50)
+// 2 048 chars ≈ 512 tokens at ~4 chars/token; overlap = 12.5%
+let splitter = try RecursiveCharacterTextSplitter(chunkSize: 2048, chunkOverlap: 256)
 let stats = ChunkStats.analyze(sampleDocs, using: splitter)
 print(stats)
 ```
 
 ```
 chunks  : 1 847
-length  : min=12  p25=380  p50=498  p75=511  max=512  mean=467
+length  : min=12  p25=1 540  p50=1 992  p75=2 044  max=2 048  mean=1 870
 underfilled (<50% of chunkSize): 94 (5%)
 at ceiling (==chunkSize)       : 312 (17%)
-tokens  : min=3  max=128
+tokens  : min=3  max=512
 ```
 
 ## Interpreting the signals

@@ -25,16 +25,32 @@ Add TextSplitter to your package, pick a splitter, produce chunks.
 | JSX / Vue / Svelte | ``JSFrameworkTextSplitter`` |
 | Sentences | ``SentenceTextSplitter`` |
 
+## Chunk size units
+
+`chunkSize` and `chunkOverlap` are measured in **characters** by default
+(`lengthFunction: { $0.count }`), not tokens. A rough conversion for English prose:
+
+| Token budget | `chunkSize` (chars) | `chunkOverlap` (chars) |
+|---|---|---|
+| 128 tokens | 512 | 64 |
+| 256 tokens | 1 024 | 128 |
+| 512 tokens | 2 048 | 256 |
+
+The overlap is 64 / 512 = **12.5%** — the empirically validated sweet spot
+that prevents context loss at boundaries without excessive redundancy.
+To operate directly on tokens, supply a `lengthFunction` backed by your
+tokenizer (see ``splitTextOnTokens(text:tokenizer:)``).
+
 ## Basic usage
 
-Split a string into chunks:
+Split a string into chunks of roughly 512 tokens (≈ 2 048 characters):
 
 ```swift
 import TextSplitter
 
 let splitter = try RecursiveCharacterTextSplitter(
-    chunkSize: 512,
-    chunkOverlap: 50
+    chunkSize: 2048,   // ≈ 512 tokens
+    chunkOverlap: 256  // 12.5% overlap
 )
 
 let chunks: [String] = splitter.splitText(longDocument)
